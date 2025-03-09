@@ -96,12 +96,12 @@ weight_data.columns.name = None
 
 # calculate portfolio return
 portfolios_return = {}
-for year in range(2002, 2023):
+for year in range(2003, 2023):
     stocks_return = (price_data[year + 1] - price_data[year]) / price_data[year]
     portfolios_return[year] = (stocks_return * weight_data[year]).sum()
 
 print("\nYearly Portfolio Returns")
-for year in range(2002, 2023):
+for year in range(2003, 2023):
     print(f"Year {year}: Portfolio Return = {portfolios_return[year]}")
 
 # calculate benchmark returns
