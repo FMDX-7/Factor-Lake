@@ -1,0 +1,182 @@
+import pandas as pd
+import numpy as np
+
+factors = {
+    1: '12-Mo Momentum %',
+    2: '6-Mo Momentum %',
+    3: '1-Mo Momentum %',
+    4: '1-Yr Price Vol %',
+    5: 'Accruals/Assets',
+    6: 'ROA %',
+    7: '1-Yr Asset Growth %',
+    8: '1-Yr CapEX Growth %',
+    9: 'Book/Price',
+}
+
+def get_user_factors():
+    print("Available factors:")
+    for num, factor in factors.items():
+        print(f"{num}: {factor}")
+
+    factor_number = 1 #int(input("Select 1 Factor? "))
+    if factor_number != 1:
+        print("Only one factor can be selected for the portfolio.")
+        return None
+    
+    while True:
+        try:
+            user_choice = int(input(f"Enter the factor number: "))
+            if user_choice in factors:
+                return factors[user_choice]
+            else:
+                print("Invalid number. Please enter a number from the list.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+    
+
+class MarketObject:
+    def __init__(self, data, t):
+        """
+        Initializes MarketObject with stock data and year.
+        
+        data (DataFrame): Data containing 'Ticker', 'Ending Price', and the factor values.
+        t (int): The year of the market data.
+        """
+        self.stocks = data.dropna()
+        # Rename columns safely
+        self.stocks = self.stocks.rename(columns={self.stocks.columns[0]: 'Ticker', self.stocks.columns[1]: 'Ending Price'})
+        self.t = t
+
+    def getPrice(self, ticker):
+        ticker_data = self.stocks.loc[self.stocks['Ticker'] == ticker]
+        if ticker_data.empty:
+            print(f"{ticker} - not found in market data for {self.t} - SKIPPING")
+            return None
+        return ticker_data['Ending Price'].iloc[-1]
+
+    def getFactor(self, ticker, factor_name):
+        """Returns the factor value for a given ticker."""
+        factor_data = self.stocks.loc[self.stocks['Ticker'] == ticker, factor_name]
+        if not factor_data.empty:
+            return factor_data.iloc[0]
+        else:
+            print(f"Factor {factor_name} for {ticker} not found.")
+            return None
+
+
+class Portfolio:
+    def __init__(self, name, investments=None):
+        self.name = name
+        self.investments = investments if investments is not None else []
+
+    def add_investment(self, ticker, nShares):
+        investment = {'ticker': ticker, 'number_of_shares': nShares}
+        self.investments.append(investment)
+
+    def remove_investment(self, ticker):
+        self.investments = [inv for inv in self.investments if inv['ticker'] != ticker]
+
+    def present_value(self, market):
+        total_value = 0
+        print(f'\nPortfolio values for {market.t}:')
+        for inv in self.investments:
+            price = market.getPrice(inv['ticker'])
+            if price is not None:
+                stock_value = price * inv['number_of_shares']
+                total_value += stock_value
+                print(f'{inv["ticker"]} - {inv["number_of_shares"]} shares at ${price:.2f} per share = ${stock_value:.2f}')
+        return total_value
+
+    def calculate_return(self, t1_value, t2_value):
+        if t1_value != 0:
+            return (t2_value - t1_value) / t1_value * 100
+        else:
+            raise ValueError('Value at time 1 is 0')
+
+
+def load_data():
+    file_path = '/content/drive/My Drive/Cayuga Fund Factor Lake/FR2000 Annual Quant Data FOR RETURN SIMULATION.xlsx'
+    return pd.read_excel(file_path, sheet_name='Data', header=2, skiprows=[3, 4])
+
+
+def build_factor_portfolio(data, factor_name, date, aum, top_percent=0.1):
+    data = data.copy()
+    data['Year'] = pd.to_datetime(data['Date']).dt.year
+    factor_data = data.loc[data['Year'] == date, ['Ticker-Region', 'Ending Price', factor_name]].dropna()
+
+    if factor_data.empty:
+        print(f"No data available for factor {factor_name} in {date}")
+        return {}
+    
+    factor_data['Factor Score'] = factor_data[factor_name].rank(pct=True)
+    top_stocks = factor_data.nlargest(int(len(factor_data) * top_percent), 'Factor Score')
+    
+    num_stocks = len(top_stocks)
+    allocation_per_stock = aum / num_stocks if num_stocks > 0 else 0
+    
+    top_stocks['Shares'] = allocation_per_stock / top_stocks['Ending Price']
+    
+    return top_stocks.set_index('Ticker-Region')['Shares'].to_dict()
+
+
+def rebalance_portfolio(data, factor_name, start_year, end_year, initial_aum):
+    data = data.copy()
+    data['Year'] = pd.to_datetime(data['Date']).dt.year
+    aum = initial_aum
+    portfolio = {}
+    
+    for year in range(start_year, end_year + 1):
+        print(f"\nRebalancing Portfolio for {year} based on {factor_name}...")
+        portfolio = build_factor_portfolio(data, factor_name, year, aum)
+        
+        if year < end_year:
+            market = MarketObject(data.loc[data['Year'] == year], year)
+            growth, start_value, end_value = calculate_growth(data, portfolio, year, year + 1, market)
+            print(f"Year {year} to {year+1}: Growth: {growth:.2%}, Start Value: ${start_value:.2f}, End Value: ${end_value:.2f}")
+            aum = end_value  # Liquidate and reinvest
+    
+    overall_growth = (aum - initial_aum) / initial_aum if initial_aum else 0
+    print(f"Final Portfolio Value after {end_year}: ${aum:.2f}")
+    print(f"Overall Growth from {start_year} to {end_year}: {overall_growth:.2%}")
+    
+    return portfolio
+
+
+def calculate_growth(data, portfolio, start_year, end_year, market):
+    data = data.copy()
+    data['Year'] = pd.to_datetime(data['Date']).dt.year
+    start_prices = data.loc[data['Year'] == start_year, ['Ticker-Region', 'Ending Price']].set_index('Ticker-Region')
+    end_prices = data.loc[data['Year'] == end_year, ['Ticker-Region', 'Ending Price']].set_index('Ticker-Region')
+    
+    total_start_value = sum(portfolio[ticker] * start_prices.loc[ticker, 'Ending Price'] for ticker in portfolio if ticker in start_prices.index)
+    total_end_value = sum(portfolio[ticker] * end_prices.loc[ticker, 'Ending Price'] for ticker in portfolio if ticker in end_prices.index)
+    
+    removed_stocks = [ticker for ticker in portfolio if ticker not in end_prices.index]
+    liquidated_value = sum(portfolio[ticker] * start_prices.loc[ticker, 'Ending Price'] for ticker in removed_stocks if ticker in start_prices.index)
+    total_end_value += liquidated_value
+    
+    growth = (total_end_value - total_start_value) / total_start_value if total_start_value else 0
+    return growth, total_start_value, total_end_value
+
+    # Load data
+    data = load_data()
+
+# MAIN EXECUTION
+if __name__ == "__main__":
+    # Get the initial AUM and the start/end years and specify factor to use (6-Mo Momentum for this example)
+    factor_name = get_user_factors()
+    if factor_name is None:
+        print("Please select a valid factor.")
+    else:
+        initial_aum = float(input("Enter the initial AUM for the portfolio: "))
+        start_year = int(input("Enter the starting year for the portfolio: "))
+        end_year = int(input("Enter the ending year for the portfolio: "))
+    
+        # Rebalance the portfolio yearly and calculate growth
+        final_portfolio = rebalance_portfolio(data, factor_name, start_year, end_year, initial_aum)
+    
+        # Optionally print the final portfolio allocation
+        # print("\nFinal Portfolio Allocation:")
+        # for ticker, shares in final_portfolio.items():
+        #     print(f"{ticker}: {shares:.6f} shares")
+
