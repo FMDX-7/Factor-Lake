@@ -54,11 +54,10 @@ def calculate_growth(portfolio, next_market, current_market):
 
 def rebalance_portfolio(data, start_year, end_year, initial_aum):
     aum = initial_aum
-    initial_portfolio = Portfolio(name="Initial Portfolio")
     years = []
-    portfolio_values = []
+    portfolio_returns = []  # Store yearly returns for Information Ratio
 
-    for year in range(start_year, end_year + 1):
+    for year in range(start_year, end_year):
         print(f"\nRebalancing Portfolio for {year} based on factors...")
         market = MarketObject(data.loc[data['Year'] == year], year)
         
@@ -67,22 +66,25 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
             market=market
         )
         
-        if market.t < end_year:
+        if year < end_year:
             next_market = MarketObject(data.loc[data['Year'] == year + 1], year + 1)
             growth, total_start_value, total_end_value = calculate_growth(yearly_portfolio, next_market, market)
+            
             print(f"Year {year} to {year + 1}: Growth: {growth:.2%}, Start Value: ${total_start_value:.2f}, End Value: ${total_end_value:.2f}")
             aum = total_end_value  # Liquidate and reinvest
-        
-        # Track values for unit test
+            
+            # Append annual return (growth) to portfolio_returns
+            portfolio_returns.append(growth)
+
         years.append(year)
-        portfolio_values.append(aum)
 
     # Calculate overall growth
     overall_growth = (aum - initial_aum) / initial_aum if initial_aum else 0
     print(f"\nFinal Portfolio Value after {end_year}: ${aum:.2f}")
     print(f"Overall Growth from {start_year} to {end_year}: {overall_growth * 100:.2f}%")
     
-    return portfolio_values
+    return portfolio_returns
+
 
 
 import numpy as np
