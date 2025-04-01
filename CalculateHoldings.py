@@ -83,3 +83,38 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
     print(f"Overall Growth from {start_year} to {end_year}: {overall_growth * 100:.2f}%")
     
     return portfolio_values
+
+
+import numpy as np
+
+def calculate_information_ratio(portfolio_returns, benchmark_returns):
+    """
+    Calculates the Information Ratio (IR) for a given set of portfolio returns and benchmark returns.
+    
+    Parameters:
+        portfolio_returns (list or np.array): List of portfolio returns over time.
+        benchmark_returns (list or np.array): List of benchmark returns over time.
+    
+    Returns:
+        float: The Information Ratio value.
+    """
+    # Ensure inputs are numpy arrays for mathematical operations
+    portfolio_returns = np.array(portfolio_returns)
+    benchmark_returns = np.array(benchmark_returns)
+
+    # Calculate excess returns
+    active_returns = portfolio_returns - benchmark_returns
+    
+    # Calculate the mean excess return (numerator)
+    mean_excess_return = np.mean(active_returns)
+    
+    # Calculate tracking error (denominator)
+    tracking_error = np.std(active_returns, ddof=1)  # Use sample std deviation
+
+    # Prevent division by zero
+    if tracking_error == 0:
+        return None  # Or return float('nan') to indicate undefined IR
+    
+    # Compute Information Ratio
+    information_ratio = mean_excess_return / tracking_error
+    return information_ratio
