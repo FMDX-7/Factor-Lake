@@ -101,9 +101,8 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
 def get_benchmark_return(year):
     """
     This function should return the benchmark return for the given year.
-    Replace this with the actual logic for retrieving benchmark returns.
     """
-    # Sample data - Replace this with actual benchmark return data
+    # Data from Factset (September)
     benchmark_data = {
         2002: 34.62, 2003: 17.48, 2004: 16.56, 2005: 8.65, 2006: 11.01,
         2007: -15.63, 2008: -11.08, 2009: 11.89, 2010: -4.73, 2011: 30.01,
