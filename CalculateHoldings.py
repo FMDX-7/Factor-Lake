@@ -98,18 +98,18 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
     
     return portfolio_returns, benchmark_returns
 
-def get_benchmark_return(year):
-    """
-    This function should return the benchmark return for the given year.
-    """
-    # Data from Factset (September)
-    benchmark_data = {
-        2002: 34.62, 2003: 17.48, 2004: 16.56, 2005: 8.65, 2006: 11.01,
-        2007: -15.63, 2008: -11.08, 2009: 11.89, 2010: -4.73, 2011: 30.01,
-        2012: 28.22, 2013: 2.6, 2014: -0.09, 2015: 13.71, 2016: 19.11,
-        2017: 13.8, 2018: -10.21, 2019: -1.03, 2020: 46.21, 2021: -24.48, 2022: 7.23
-    }
-    return benchmark_data.get(year, 0)
+# def get_benchmark_return(year):
+#     """
+#     This function should return the benchmark return for the given year.
+#     """
+#     # Data from Factset (September)
+#     benchmark_data = {
+#         2002: 34.62, 2003: 17.48, 2004: 16.56, 2005: 8.65, 2006: 11.01,
+#         2007: -15.63, 2008: -11.08, 2009: 11.89, 2010: -4.73, 2011: 30.01,
+#         2012: 28.22, 2013: 2.6, 2014: -0.09, 2015: 13.71, 2016: 19.11,
+#         2017: 13.8, 2018: -10.21, 2019: -1.03, 2020: 46.21, 2021: -24.48, 2022: 7.23
+#     }
+#     return benchmark_data.get(year, 0)
 
 def calculate_information_ratio(portfolio_returns, benchmark_returns):
     """
