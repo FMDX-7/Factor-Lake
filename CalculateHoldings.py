@@ -54,12 +54,14 @@ def calculate_growth(portfolio, next_market, current_market):
     return growth, total_start_value, total_end_value
 
 def rebalance_portfolio(data, start_year, end_year, initial_aum):
+    initial_portfolio = Portfolio(name="Initial Portfolio")
     aum = initial_aum
     years = []
+    portfolio_values = []
     portfolio_returns = []  # Store yearly returns for Information Ratio
     benchmark_returns = []  # Store benchmark returns for comparison
 
-    for year in range(start_year, end_year):
+    for year in range(start_year, end_year+1):
         print(f"\nRebalancing Portfolio for {year} based on factors...")
         market = MarketObject(data.loc[data['Year'] == year], year)
         
@@ -68,7 +70,7 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
             market=market
         )
         
-        if year < end_year:
+        if market.t < end_year:
             next_market = MarketObject(data.loc[data['Year'] == year + 1], year + 1)
             growth, total_start_value, total_end_value = calculate_growth(yearly_portfolio, next_market, market)
             
@@ -83,6 +85,7 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
             benchmark_returns.append(benchmark_return)
 
         years.append(year)
+        portfolio_values.append(aum)
 
     # Calculate overall growth
     overall_growth = (aum - initial_aum) / initial_aum if initial_aum else 0
@@ -96,7 +99,7 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
     else:
         print("Information Ratio could not be calculated due to zero tracking error.")
     
-    return portfolio_returns, benchmark_returns
+    return portfolio_returns, benchmark_returns, portfolio_values
 
 def get_benchmark_return(year):
     """
