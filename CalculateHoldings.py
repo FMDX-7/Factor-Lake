@@ -3,6 +3,7 @@ from MarketObject import MarketObject
 from FactorFunction import Factors
 from portfolio import Portfolio
 import pandas as pd
+import numpy as np
 
 def calculate_holdings(aum, market):
     # Factor values for all tickers in the market
@@ -56,6 +57,7 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
     aum = initial_aum
     years = []
     portfolio_returns = []  # Store yearly returns for Information Ratio
+    benchmark_returns = []  # Store benchmark returns for comparison
 
     for year in range(start_year, end_year):
         print(f"\nRebalancing Portfolio for {year} based on factors...")
@@ -76,6 +78,10 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
             # Append annual return (growth) to portfolio_returns
             portfolio_returns.append(growth)
 
+            # Get benchmark return for the year (assuming you have benchmark data, replace it as needed)
+            benchmark_return = get_benchmark_return(year)  # Define this function based on your benchmark data
+            benchmark_returns.append(benchmark_return)
+
         years.append(year)
 
     # Calculate overall growth
@@ -83,11 +89,28 @@ def rebalance_portfolio(data, start_year, end_year, initial_aum):
     print(f"\nFinal Portfolio Value after {end_year}: ${aum:.2f}")
     print(f"Overall Growth from {start_year} to {end_year}: {overall_growth * 100:.2f}%")
     
-    return portfolio_returns
+    # Calculate and print Information Ratio
+    information_ratio = calculate_information_ratio(portfolio_returns, benchmark_returns)
+    if information_ratio is not None:
+        print(f"Information Ratio: {information_ratio:.4f}")
+    else:
+        print("Information Ratio could not be calculated due to zero tracking error.")
+    
+    return portfolio_returns, benchmark_returns
 
-
-
-import numpy as np
+def get_benchmark_return(year):
+    """
+    This function should return the benchmark return for the given year.
+    Replace this with the actual logic for retrieving benchmark returns.
+    """
+    # Sample data - Replace this with actual benchmark return data
+    benchmark_data = {
+        2002: 34.62, 2003: 17.48, 2004: 16.56, 2005: 8.65, 2006: 11.01,
+        2007: -15.63, 2008: -11.08, 2009: 11.89, 2010: -4.73, 2011: 30.01,
+        2012: 28.22, 2013: 2.6, 2014: -0.09, 2015: 13.71, 2016: 19.11,
+        2017: 13.8, 2018: -10.21, 2019: -1.03, 2020: 46.21, 2021: -24.48, 2022: 7.23
+    }
+    return benchmark_data.get(year, 0)
 
 def calculate_information_ratio(portfolio_returns, benchmark_returns):
     """
