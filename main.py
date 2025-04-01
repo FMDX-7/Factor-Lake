@@ -18,5 +18,13 @@ def main():
     print("Rebalancing portfolio...")
     final_portfolio = rebalance_portfolio(rdata, start_year=2002, end_year=2023, initial_aum=1)
 
+    ### Calculate and display Information Ratio ###
+    information_ratio = calculate_information_ratio(portfolio_returns, benchmark_returns)
+    if information_ratio is not None:
+        print(f"Information Ratio of the backtest: {information_ratio:.4f}")
+    else:
+        print("Information Ratio could not be calculated due to zero tracking error.")
+
+
 if __name__ == "__main__":
     main()
