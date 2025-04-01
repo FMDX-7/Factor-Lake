@@ -32,11 +32,6 @@ def main():
     # Store the benchmark returns in a list (excluding the first year, which will be NaN)
     benchmark_returns = FactSet_df['Benchmark_Change'].dropna().tolist()
 
-    # Ensure benchmark returns and portfolio returns align in length
-    min_length = min(len(portfolio_returns), len(benchmark_returns))
-    portfolio_returns = portfolio_returns[:min_length]
-    benchmark_returns = benchmark_returns[:min_length]
-
     ### Calculate and display Information Ratio ###
     information_ratio = calculate_information_ratio(portfolio_returns, benchmark_returns)
     if information_ratio is not None:
